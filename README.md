@@ -72,3 +72,14 @@ The completion of the power delivery system marks the end of the assembly proces
 <p align="center"><em>Figure 8: Complete wiring and power delivery architecture of the car.</em></p>
 
 ## OS Setup & Software Installation:
+Initially, I booted the system from Raspberry Pi OS to test the sensors, servos, and DC motors included with the PiCar. Verifying that all of the vital components can be controlled digitally via Sunfounder's "RobotHAT" Python library, I fully wiped the system and installed Ubuntu 24.04 Server on the Pi. My choice of Ubuntu over Pi OS for the project boils down to two primary reasons:
+
+1. ROS 2 Compatibility: ROS 2 is officially supported and thoroughly tested on Ubuntu LTS releases. Pi OS, on the other hand, is Debian-based and is known to have general compatibility issues with ROS. To avoid having to manage running ROS 2 in a Docker container on top of Pi OS, I chose the path of least resistance and installed Ubuntu. While the Sunfounder Robot HAT was not designed to work in conjunction with Ubuntu, I concluded that debugging Python libraries now would be far less difficult than dealing with Docker, which I have limited knowledge on, later when installing ROS.
+
+2. Performance: Thanks to the server edition of Ubuntu 24.04 lacking a visual desktop and being completely terminal-based, I found that installing it over Pi OS would maximize performance and power efficiency going forward. Running a desktop environment continuously provided no operational benefit for the project, as I would be communicating with the Pi headlessly via SSH and visualizing everything on my laptop. Additionally, having both the Pi and my laptop running on Ubuntu simplified dependency management and kept the OS consistent across the project.
+
+With the Pi running on Ubuntu 24.04 Server and my laptop running on Ubuntu 22.04, I installed ROS 2 Jazzy and Humble, respectfully, on both devices and began building my workspace. Due to my two-device approach to integrating ROS with the PiCar, I chose to keep all nodes directly accessing the sensors, servos, and motors locally on the Pi and the fusion, calibration, and visualization nodes on the laptop. This way the Pi could act as an embedded microcontroller executing low-level command outputs for the car and the laptop could act as a remote workstation recieving data from the Pi and managing SLAM as well as visualization.
+
+## IMU Calibration & ROS Integration:
+
+Modifying an existing Python script integrating the SparkFun ICM-20948 with ROS 2, I developed a custom node to publish accelerometer, gyroscope, and magnetometer readings from the IMU under the /??? topic in the Pi ROS workspace. Accessing the imu_tools ROS package, raw readings were then sent into a madgwick filter to produce a combined pose estimate. To calibrate the accelerometer and gyroscope, 
