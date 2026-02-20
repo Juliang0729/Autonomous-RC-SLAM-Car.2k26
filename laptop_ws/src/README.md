@@ -15,3 +15,10 @@ This workspace is intended to run on Ubuntu 22.04 with ROS 2 Humble.
 - robot_localization
 - imu_tools
 - rviz2
+
+# System Architecture:
+
+This project separates low-level hardware control (pi_ws) from high-level autonomy (laptop_ws) to:
+
+- Reduce hardware load
+- Improve SLAM and navigation performance
