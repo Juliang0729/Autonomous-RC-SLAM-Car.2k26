@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>servomotor_ros</name>
+  <version>0.0.1</version>
+  <description>ROS 2 node to control RC car motors and steering using Robot HAT</description>
+
+  <maintainer email="your_email@example.com">Julian</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>setuptools</buildtool_depend>
+
+  <depend>rclpy</depend>
+  <depend>geometry_msgs</depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
