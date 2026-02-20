@@ -7,3 +7,11 @@ This workspace contains high-level autonomy packages:
 - rc_nav2 – Navigation2 configuration and costmap setup
 
 This workspace is intended to run on Ubuntu 22.04 with ROS 2 Humble.
+
+# Dependencies:
+
+- slam_toolbox
+- navigation2
+- robot_localization
+- imu_tools
+- rviz2
