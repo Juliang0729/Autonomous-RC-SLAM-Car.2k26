@@ -1,0 +1,3 @@
+[submodule "pi_ws/src/ros2_icm20948"]
+	path = pi_ws/src/ros2_icm20948
+	url = https://github.com/Juliang0729/ros2_icm20948.git
