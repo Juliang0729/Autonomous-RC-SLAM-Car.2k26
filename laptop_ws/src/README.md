@@ -13,7 +13,9 @@ This workspace is intended to run on Ubuntu 22.04 with ROS 2 Humble.
 - slam_toolbox
 - navigation2
 - robot_localization
-- imu_tools
+- imu_tools (https://github.com/CCNYRoboticsLab/imu_tools)
+- ROS2 csm (https://github.com/AlexKaravaev/csm)
+- ros2_laser_scan_matcher (https://github.com/AlexKaravaev/ros2_laser_scan_matcher)
 - rviz2
 
 # System Architecture:
