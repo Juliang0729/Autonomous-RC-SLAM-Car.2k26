@@ -11,12 +11,8 @@ This workspace is intended to run on Ubuntu 24.04 Server with ROS 2 Jazzy.
 
 # Dependencies:
 
-- imu_tools
-- rplidar_ros
-- tf2_ros
-- sensor_msgs
-- geometry_msgs
-- rclpy
+- imu_tools (https://github.com/CCNYRoboticsLab/imu_tools)
+- rplidar_ros (https://github.com/Slamtec/rplidar_ros)
 
 # Submodules:
 
