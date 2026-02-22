@@ -135,12 +135,12 @@ Finally, two launch scripts `laptop_bringup.launch.py`, `pi_bringup.launch.py` w
 <p align="center">
   <img src="https://github.com/user-attachments/assets/13cdd5c6-b426-4855-8c09-09d53146a302" width="65%" />
 </p>
-<p align="center"><em>Figure 13: Costmap with trajectory planning as well as pose and heading estimates.</em></p>
+<p align="center"><em>Figure 14: Costmap with trajectory planning as well as pose and heading estimates.</em></p>
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/f08c08f0-3a6f-4153-bc01-14702efc61c5" width="65%" />
 </p>
-<p align="center"><em>Figure 14: Costmap with LiDAR point cloud overlay.</em></p>
+<p align="center"><em>Figure 15: Costmap with LiDAR point cloud overlay.</em></p>
 
 ## Takeaways & Potential Further Improvements:
 
