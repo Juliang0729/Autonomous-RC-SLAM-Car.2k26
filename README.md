@@ -80,7 +80,12 @@ Initially, I booted the system from Raspberry Pi OS to test the sensors, servos,
 
 With the Ubuntu 24.04 Server running on the Pi and Ubuntu 22.04 on my laptop, I installed ROS 2 Jazzy on the Pi and ROS 2 Humble on the laptop and began building my workspace. Given this two-device approach to integrating ROS with the PiCar, I kept all hardware-interface nodes, those directly accessing sensors, servos, and motors, on the Pi. Higher-level processes such as sensor fusion, calibration, SLAM, and visualization were kept on the laptop. This way the Pi could function as an embedded controller executing low-level actuation and data acquisition, while the laptop could act as a remote workstation receiving data from the Pi and managing mapping, navigation, and visualization.
 
-After a long-winded debugging process installing the required Python libraries, enabling i2c and spi using raspi-config, copying hardware dtoverlays, and verifying pin mappings with i2cdetect, the Pi was ready to use with ROS 2. 
+After a long-winded debugging process installing the required Python libraries, enabling i2c and spi using raspi-config, copying hardware dtoverlays, and verifying pin mappings with i2cdetect, the Pi was ready to use with ROS 2.
+
+## Motor & Servo Control:
+
+Developing a motor and steering control node in ROS was very straightforward, largely thanks to the reference Robot HAT [test scripts](https://github.com/sunfounder/robot-hat/tree/v2.0/tests) available on SunFounder's GitHub. The integration process boiled down to identifying the correct motor and servo pin mappings on the HAT and using the _RobotHAT_ Python library to implement simple control logic. `car_driver_node.py` was written to receive steering and throttle commands from geometry_msgs/Twist on the cmd_vel topic, converting linear and angular velocity commands into motor and servo outputs.
+
 ## IMU Calibration & ROS Integration:
 
 Modifying an existing [ROS node](https://github.com/norlab-ulaval/ros2_icm20948) integrating the SparkFun ICM-20948 with ROS 2, I developed a custom node `ros2_icm20948` to publish raw accelerometer, gyroscope, and magnetometer readings from the Adafruit ICM-20948 under the /imu/data_raw and /imu/mag topics in the Pi ROS workspace. Utilizing the [imu_tools](https://github.com/CCNYRoboticsLab/imu_tools) ROS package, raw IMU data was passed through a Madgwick filter to produce a fused orientation estimate published under /imu/data. For calibration, [imucal](https://github.com/mad-lab-fau/imucal) was used to correct accelerometer and gyroscope biases, and [magnetometer_calibration](https://github.com/italocjs/magnetometer_calibration) was used to compute hard- and soft-iron compensation values for the magnetometer. The resulting calibration coefficients were integrated directly into `icm20948_node` to linearly transform raw sensor measurements into calibrated vectors, reducing IMU drift and improving overall orientation accuracy.
@@ -105,8 +110,53 @@ Integrating the RPLiDAR C1 with ROS 2 was very straightforward thanks to [rplida
 
 Due to the lack of wheel encoders on the PiCar, LiDAR scan matching was employed to estimate odometry and improve overall pose estimation accuracy. To implement scan matching, [ros2_laser_scan_matcher](https://github.com/AlexKaravaev/ros2_laser_scan_matcher) along with a ported version of [csm](https://github.com/AlexKaravaev/csm) for ROS 2 was used. These nodes worked as is, needing no modification.
 
-## Motor & Servo Control:
+## Sensor Fusion & SLAM:
 
-Developing a motor and steering control node in ROS was also very straightforward, largely thanks to the reference Robot HAT [test scripts](https://github.com/sunfounder/robot-hat/tree/v2.0/tests) available on SunFounder's GitHub. The integration process boiled down to identifying the correct motor and servo pin mappings on the HAT and using the _RobotHAT_ Python library to implement simple control logic. `car_driver_node.py` was written to receive steering and throttle commands from geometry_msgs/Twist on the cmd_vel topic, converting linear and angular velocity commands into motor and servo outputs.
+With LiDAR providing reliable odometry and the IMU delivering calibrated orientation estimates, both sensors were utilized within a unified fusion pipeline to produce a consistent and accurate state estimate of the car. Through an Extended Kalman Filter (EKF) LiDAR scan matching served as the primary source of planar pose and velocity information, providing ${x}$, ${y}$, and yaw (${\psi}$) estimates along with the corresponding linear velocities $\dot{x}$ and $\dot{y}$. The IMU was configured to provide high-frequency orientation and angular velocity measurements, with the gyroscope being the main source of yaw rate ($\dot{\psi}$) estimates to stabilize heading between LiDAR updates. Altogether, the EKF parameters were written into `ekf.yaml` and implemented using [robot_localization](https://github.com/cra-ros-pkg/robot_localization).
 
-## SLAM & Sensor Fusion:
+To perform SLAM, [slam_toolbox](https://github.com/SteveMacenski/slam_toolbox) was utilized to integrate EKF pose estimates with incoming LiDAR point clouds, enabling occupancy grid mapping and localization. Prior to any autonomy, the car was driven around my dorm room using [teleop_twist_keyboard](https://github.com/ros-teleop/teleop_twist_keyboard) for keyboard control. Running the EKF along with slam_toolbox produced a detailed 2D map of the dorm, delineating objects such as desks or dressers in its output.
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/1b7b68e1-9689-4a20-9dba-5fed71a1ddc7" width="65%" />
+</p>
+<p align="center"><em>Figure 12: 2D map of dorm room produced by slam_toolbox, overlayed with LiDAR point cloud.</em></p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/7b891af8-63dd-400f-930a-6fd2087f90be" width="45%" />
+</p>
+<p align="center"><em>Figure 13: Comparison of dorm room floor plan with map produced by slam_toolbox (with annotations).</em></p>
+
+## Autonomous Navigation with Nav2:
+
+The final phase of the project was to enable autonomous navigation using [Nav2](https://github.com/ros-navigation/navigation2). This process was very straightforward, consisting of writing a detailed yaml `nav2_params.yaml` outlining velocity and acceleration constraints as well as vehicle footprint information and steering geometry (Ackermann). The constraints were determined through iterative testing aimed at preventing the car from becoming immobilized by static obstacles, as well as to mitigate tipping caused excessive acceleration.
+
+Finally, two launch scripts `laptop_bringup.launch.py`, `pi_bringup.launch.py` were written for the laptop and the Pi 5, respectfully. These scripts launch all of the required ROS nodes, from servo and motor control to sensor fusion, necessary for SLAM and autonomous navigation. Running Nav2 enabled the car to follow user-defined waypoints placed in RViz. As the room was explored, a detailed global costmap was generated depicting the difficulty, or cost, of traversing certain areas between or around objects. As the costmap updated, waypoint navigation got smarter, prioritizing object avoidance while determining the most efficient possible route between points.
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/13cdd5c6-b426-4855-8c09-09d53146a302" width="65%" />
+</p>
+<p align="center"><em>Figure 13: Costmap with trajectory planning as well as pose and heading estimates.</em></p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/f08c08f0-3a6f-4153-bc01-14702efc61c5" width="65%" />
+</p>
+<p align="center"><em>Figure 14: Costmap with LiDAR point cloud overlay.</em></p>
+
+## Takeaways & Potential Further Improvements:
+
+The completion of this project left me with an enhanced understanding of how theoretical robotics concepts, such as sensor fusion, trajectory planning, and state estimation, translate into practical engineering challenges. Looking back at my work, I can attribute much of the success of this project to one, choosing the right materials and components, and two, having a defined system architecture. 
+
+Deeply researching both the reliability and compatibility of components beforehand resulted in the assembly and software integration processes being highly streamlined and painless. The only real hurdles in project came from ROS dependency version mismatches and certain Raspberry Pi OS functions being different or unavailable on Ubuntu. Thanks to the two-device system architecture maintaining separate ROS workspaces on the laptop and the Pi, bugs could be easily isolated and identified as either hardware or software related.
+
+With the SLAM car project complete for now, I propose a list of potential further improvements:
+
+- **Wheel Encoders**: Incorporating wheel encoders into the project provides direct velocity feedback, improving odometry and state estimation while eliminating reliance on scan matching.
+
+- **Camera, Ultrasonic, Greyscale Sensors**: While LiDAR and IMU were used as the primary sensors in this project for the sake of simplicity, incorporating the camera, ultrasonic, and greyscale sensors included with the PiCar-X enables line tracking, cliff detection, and image tagging via computer vision. As the sensors included with the PiCar lack out of the box support for Ubuntu found in Raspberry Pi OS, debugging libcamera, V4L2 and rpicam is likely needed. Using a different HAT than the SunFounder Robot HAT or bypassing the HAT altogether and accessing the Pi's GPIO pins directly may resolve some bugs.
+
+- **Autonomous Navigation**: Developing more advanced navigation algorithms, such as an autonomous 'wander' function for mapping, could help the car operate with required less user involvement. Implementing and training a neural network on larger, more complex environments could significantly improve the car's local planner.
+
+- **Misc. Hardware Upgrades/Changes**:
+  1. Relocating the IMU to a location with less magnetic interference, preferably away from the batteries and Pi, could reduce IMU drift and orientation estimation inaccuracies.
+  2. Using a depth camera instead of a standard Raspberry Pi camera could improve object detection, path planning, and overall SLAM accuracy.
+  3. Swapping the Raspberry Pi 5 for an Nvidia Jetson Nano could improve hardware and thermal performance, as well as enable advanced machine learning integration with the project.
