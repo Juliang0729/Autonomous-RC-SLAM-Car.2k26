@@ -107,4 +107,6 @@ Due to the lack of wheel encoders on the PiCar, LiDAR scan matching was employed
 
 ## Motor & Servo Control:
 
-Developing a motor and steering control node in ROS was also very straightforward, largely thanks to the reference Robot HAT [test scripts](https://github.com/sunfounder/robot-hat/tree/v2.0/tests) published on SunFounder's GitHub. The integration process boiled down to simply figuring out the motor and servo pin mappings on the HAT and using the _RobotHAT_ Python library to write simple control logic. A simple callback function was written to receive motor and steering commands from Twist and publish x,y,z velocity under cmd_vel.
+Developing a motor and steering control node in ROS was also very straightforward, largely thanks to the reference Robot HAT [test scripts](https://github.com/sunfounder/robot-hat/tree/v2.0/tests) available on SunFounder's GitHub. The integration process boiled down to identifying the correct motor and servo pin mappings on the HAT and using the _RobotHAT_ Python library to implement simple control logic. `car_driver_node.py` was written to receive steering and throttle commands from geometry_msgs/Twist on the cmd_vel topic, converting linear and angular velocity commands into motor and servo outputs.
+
+## SLAM & Sensor Fusion:
