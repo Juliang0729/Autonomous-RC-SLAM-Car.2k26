@@ -96,3 +96,15 @@ Modifying an existing [ROS node](https://github.com/norlab-ulaval/ros2_icm20948)
 <p align="center"><em>Figure 10: Hard- and soft-iron Magnetometer calibration with magnetometer_calibration.</em></p>
 
 ## LiDAR Visualization & Scan Matching:
+Integrating the RPLiDAR C1 with ROS 2 was very straightforward thanks to [rplidar_ros](https://github.com/Slamtec/rplidar_ros), an ROS node developed by Slamtec for their line of LiDAR sensors. Launching `rplidar_c1_launch.py` starts the LiDAR sensor and publishes the readings under the /laser topic. Creating static transforms connecting **laser** and **imu_icm20948** to **base_link** allows for both the LiDAR point cloud and IMU pose estimate to be visualized in RViz.
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/d4254fb0-0133-4f71-9a01-43dd639429eb" width="65%" />
+</p>
+<p align="center"><em>Figure 11: LiDAR point cloud & pose estimate shown in RViz.</em></p>
+
+Due to the lack of wheel encoders on the PiCar, LiDAR scan matching was employed to estimate odometry and improve overall pose estimation accuracy. To implement scan matching, [ros2_laser_scan_matcher](https://github.com/AlexKaravaev/ros2_laser_scan_matcher) along with a ported version of [csm](https://github.com/AlexKaravaev/csm) for ROS 2 was used. These nodes worked as is, needing no modification.
+
+## Motor & Servo Control:
+
+Developing a motor and steering control node in ROS was also very straightforward, largely thanks to the reference Robot HAT [test scripts](https://github.com/sunfounder/robot-hat/tree/v2.0/tests) published on SunFounder's GitHub. The integration process boiled down to simply figuring out the motor and servo pin mappings on the HAT and using the _RobotHAT_ Python library to write simple control logic. A simple callback function was written to receive motor and steering commands from Twist and publish x,y,z velocity under cmd_vel.
